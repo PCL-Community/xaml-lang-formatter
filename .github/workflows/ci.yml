@@ -20,8 +20,9 @@ jobs:
 
       - name: Setup Rust
         run: |
-          rustup toolchain install stable --profile minimal --component clippy rustfmt
+          rustup toolchain install stable --profile minimal
           rustup default stable
+          rustup component add clippy rustfmt
 
       - name: Check root formatting
         run: cargo fmt --all -- --check
