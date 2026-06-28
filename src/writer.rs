@@ -227,7 +227,7 @@ mod tests {
     }
 
     #[test]
-    fn default_threshold_splits_when_prefix_reaches_five_items() {
+    fn default_threshold_splits_when_prefix_reaches_eight_items() {
         let output = write_document(
             &doc(vec![
                 item("Common.Settings.Window.Width", "Width"),
@@ -235,6 +235,9 @@ mod tests {
                 item("Common.Settings.Window.Left", "Left"),
                 item("Common.Settings.Window.Top", "Top"),
                 item("Common.Settings.Window.State", "State"),
+                item("Common.Settings.Window.Mode", "Mode"),
+                item("Common.Settings.Window.Scale", "Scale"),
+                item("Common.Settings.Window.Theme", "Theme"),
             ]),
             "2026-06-28T15:21:30",
         )

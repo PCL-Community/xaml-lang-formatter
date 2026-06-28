@@ -21,7 +21,7 @@ const heroPreview = `<!-- Meta -->
 <!-- Common.Action -->
 <sys:String x:Key="Common.Action.Open">Open</sys:String>`
 
-const cliSnippet = `cargo run -- ./Lang --group-threshold 5
+const cliSnippet = `cargo run -- ./Lang --group-threshold 8
 cargo run -- ./Lang --check
 cargo run -- ./Lang --dry-run`
 
@@ -77,14 +77,18 @@ NUXT_APP_BASE_URL=/xaml-lang-formatter/ \\
           </div>
         </div>
 
-        <UCard class="glass-panel overflow-hidden border-white/10 bg-white/70 shadow-2xl shadow-slate-950/10 dark:bg-slate-900/65 dark:shadow-black/25">
+        <UCard
+            class="glass-panel overflow-hidden border-white/10 bg-white/70 shadow-2xl shadow-slate-950/10 dark:bg-slate-900/65 dark:shadow-black/25">
           <div class="space-y-5 p-1">
-            <div class="flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-slate-950/[0.03] p-5 dark:bg-white/[0.02]">
+            <div
+                class="flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-slate-950/[0.03] p-5 dark:bg-white/[0.02]">
               <div class="space-y-2">
                 <p class="text-sm font-medium text-muted">What makes it useful</p>
-                <h2 class="text-2xl font-semibold text-highlighted">Focused on language resources, not generic XML prettifying.</h2>
+                <h2 class="text-2xl font-semibold text-highlighted">Focused on language resources, not generic XML
+                  prettifying.</h2>
               </div>
-              <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary/15 to-emerald-400/15 text-primary ring-1 ring-white/10">
+              <span
+                  class="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary/15 to-emerald-400/15 text-primary ring-1 ring-white/10">
                 <UIcon class="size-6" name="i-lucide-sparkles"/>
               </span>
             </div>
@@ -92,7 +96,8 @@ NUXT_APP_BASE_URL=/xaml-lang-formatter/ \\
             <div class="grid gap-3 sm:grid-cols-3">
               <div class="rounded-2xl border border-white/10 bg-muted/25 p-4">
                 <p class="text-xs uppercase tracking-[0.18em] text-muted">Grouping</p>
-                <p class="mt-2 text-sm text-toned">Sorts by <code class="rounded bg-muted px-1 py-0.5 text-xs">x:Key</code> and keeps sections readable.</p>
+                <p class="mt-2 text-sm text-toned">Sorts by <code
+                    class="rounded bg-muted px-1 py-0.5 text-xs">x:Key</code> and keeps sections readable.</p>
               </div>
               <div class="rounded-2xl border border-white/10 bg-muted/25 p-4">
                 <p class="text-xs uppercase tracking-[0.18em] text-muted">Deterministic</p>

@@ -9,8 +9,7 @@ use crate::grouping::DEFAULT_GROUP_THRESHOLD;
 #[command(version)]
 #[command(about = "Format WPF XAML ResourceDictionary language files")]
 pub struct Cli {
-    /// Files or directories to format
-    #[arg(required = true)]
+    /// Files or directories to format. Defaults to the current directory when omitted.
     pub paths: Vec<PathBuf>,
 
     /// Check whether files are already formatted

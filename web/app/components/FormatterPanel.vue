@@ -5,7 +5,7 @@ const {createTimestamp, downloadText, format, sample} = useXamlFormatter()
 const content = ref('')
 const error = ref('')
 const fileName = ref('formatted.xaml')
-const groupThreshold = ref(5)
+const groupThreshold = ref(8)
 const manualTimestamp = ref('')
 const useManualTimestamp = ref(false)
 const lastAction = ref<'source' | 'formatted'>('source')
@@ -112,9 +112,11 @@ function downloadContent() {
           <UBadge color="success" variant="soft">In-place format</UBadge>
           <UBadge color="neutral" variant="soft">Single editor</UBadge>
         </div>
-        <h2 class="mt-3 text-2xl font-semibold tracking-tight text-highlighted">One editor. Paste, format, keep working.</h2>
+        <h2 class="mt-3 text-2xl font-semibold tracking-tight text-highlighted">One editor. Paste, format, keep
+          working.</h2>
         <p class="mt-2 max-w-3xl text-sm text-muted">
-          The web UI now behaves like a code editor: load or paste XAML, run the formatter, and the same editor is replaced with the formatted result.
+          The web UI now behaves like a code editor: load or paste XAML, run the formatter, and the same editor is
+          replaced with the formatted result.
         </p>
       </div>
 
@@ -137,11 +139,13 @@ function downloadContent() {
       </div>
     </div>
 
-    <UCard class="glass-panel overflow-hidden border-white/10 bg-white/70 shadow-2xl shadow-slate-950/10 dark:bg-slate-900/65 dark:shadow-black/25">
+    <UCard
+        class="glass-panel overflow-hidden border-white/10 bg-white/70 shadow-2xl shadow-slate-950/10 dark:bg-slate-900/65 dark:shadow-black/25">
       <div class="border-b border-white/10 px-5 py-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
-            <span class="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-emerald-400/20 text-primary ring-1 ring-white/10">
+            <span
+                class="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-emerald-400/20 text-primary ring-1 ring-white/10">
               <UIcon class="size-5" name="i-lucide-code-xml"/>
             </span>
             <div>
@@ -166,7 +170,8 @@ function downloadContent() {
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="space-y-1">
                   <div class="flex items-center gap-2">
-                    <span class="inline-flex size-8 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
+                    <span
+                        class="inline-flex size-8 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
                       <UIcon class="size-4" name="i-lucide-file-code-2"/>
                     </span>
                     <div>
@@ -249,8 +254,10 @@ function downloadContent() {
                 <UInputNumber v-model="groupThreshold" :min="1"/>
               </UFormField>
 
-              <UFormField help="Enable this if you want to override the browser-generated local timestamp." label="Manual timestamp">
-                <div class="flex items-center justify-between gap-3 rounded-2xl border border-default/50 bg-muted/30 px-3 py-2">
+              <UFormField help="Enable this if you want to override the browser-generated local timestamp."
+                          label="Manual timestamp">
+                <div
+                    class="flex items-center justify-between gap-3 rounded-2xl border border-default/50 bg-muted/30 px-3 py-2">
                   <div>
                     <p class="text-sm font-medium text-highlighted">Custom formatter timestamp</p>
                     <p class="text-xs text-muted">Use your own yyyy-MM-ddTHH:mm:ss value.</p>
@@ -268,7 +275,8 @@ function downloadContent() {
 
               <div class="rounded-2xl border border-primary/15 bg-primary/8 p-4">
                 <div class="flex items-start gap-3">
-                  <span class="mt-0.5 inline-flex size-8 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
+                  <span
+                      class="mt-0.5 inline-flex size-8 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
                     <UIcon class="size-4" name="i-lucide-clock-3"/>
                   </span>
                   <div class="space-y-1">

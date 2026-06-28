@@ -16,7 +16,13 @@ pub fn run(cli: Cli) -> Result<()> {
         .clone()
         .unwrap_or_else(|| chrono::Local::now().format("%Y-%m-%dT%H:%M:%S").to_string());
 
-    let files = collect_files(&cli.paths, !cli.no_recursive)?;
+    let paths = if cli.paths.is_empty() {
+        vec![std::env::current_dir().context("failed to resolve current directory")?]
+    } else {
+        cli.paths.clone()
+    };
+
+    let files = collect_files(&paths, !cli.no_recursive)?;
     let mut changed = 0usize;
     let mut failed = 0usize;
 
@@ -170,7 +176,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn formats_sample_input_with_default_threshold_five() {
+    fn formats_sample_input_with_default_threshold_eight() {
         let input = r#"<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
