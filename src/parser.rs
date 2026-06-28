@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
-use crate::model::{is_key_attr_name, Attr, Document, ResourceItem, FORMATTER_COMMENT_PREFIX};
+use crate::model::{Attr, Document, FORMATTER_COMMENT_PREFIX, ResourceItem, is_key_attr_name};
 
 pub fn parse_document(input: &str) -> Result<Document> {
     let input = input.strip_prefix('\u{feff}').unwrap_or(input);

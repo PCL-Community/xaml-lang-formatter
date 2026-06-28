@@ -1,7 +1,7 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
-use crate::grouping::{build_key_tree, collect_leaf_items, sorted_top_groups, KeyNode};
-use crate::model::{is_key_attr_name, Document, ResourceItem, TOOL_NAME};
+use crate::grouping::{KeyNode, build_key_tree, collect_leaf_items, sorted_top_groups};
+use crate::model::{Document, ResourceItem, TOOL_NAME, is_key_attr_name};
 
 pub fn write_document_with_group_threshold(
     doc: &Document,

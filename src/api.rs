@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 use crate::grouping::DEFAULT_GROUP_THRESHOLD;
 use crate::parser::parse_document;
