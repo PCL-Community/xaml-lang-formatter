@@ -3,17 +3,24 @@ name = "xaml-lang-formatter"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "xaml_lang_formatter"
+path = "src/lib.rs"
+
 [[bin]]
 name = "xaml-lang-formatter"
 path = "src/main.rs"
+required-features = ["cli"]
+
+[features]
+default = ["cli"]
+cli = ["dep:clap", "dep:walkdir", "dep:chrono"]
 
 [dependencies]
 anyhow = "1"
-clap = { version = "4", features = ["derive"] }
-quick-xml = { version = "0.40", features = ["encoding"] }
-walkdir = "2"
-chrono = { version = "0.4", features = ["clock"] }
+chrono = { version = "0.4", features = ["clock"], optional = true }
+clap = { version = "4", features = ["derive"], optional = true }
+walkdir = { version = "2", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "1"
-tempfile = "3"

@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy rustfmt
+          rustup default stable
+
+      - name: Check root formatting
+        run: cargo fmt --all -- --check
+
+      - name: Check WASM formatting
+        run: cargo fmt --manifest-path crates/wasm/Cargo.toml --all -- --check
+
+      - name: Clippy root crate
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Test root crate
+        run: cargo test --all-features
+
+  wasm:
+    name: WASM build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Check WASM crate
+        run: cargo check --manifest-path crates/wasm/Cargo.toml --target wasm32-unknown-unknown
+
+      - name: Build WASM package
+        run: |
+          cd crates/wasm
+          wasm-pack build \
+            --target web \
+            --release \
+            --out-dir ../../web/public/wasm
+
+  web:
+    name: Web checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+
+      - name: Setup Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Install web dependencies
+        working-directory: web
+        run: bun install
+
+      - name: Build WASM
+        working-directory: web
+        run: bun run wasm:build
+
+      - name: Typecheck web
+        working-directory: web
+        run: bun run typecheck
+
+      - name: Build web
+        working-directory: web
+        env:
+          NUXT_APP_BASE_URL: /xaml-lang-formatter/
+        run: bun run build

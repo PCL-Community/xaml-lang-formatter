@@ -1,0 +1,32 @@
+{
+  "name": "xaml-lang-formatter-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "dev:bun": "bun --bun run dev",
+    "build": "nuxt build --preset github_pages",
+    "generate": "nuxt build --preset github_pages",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
+    "wasm:build": "cd ../crates/wasm && wasm-pack build --target web --release --out-dir ../../web/public/wasm",
+    "wasm:clean": "rm -f public/wasm/*.js public/wasm/*.wasm public/wasm/*.d.ts public/wasm/package.json"
+  },
+  "dependencies": {
+    "@codemirror/lang-xml": "^6.1.0",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.8",
+    "@nuxt/ui": "^4.0.0",
+    "codemirror": "^6.0.1",
+    "nuxt": "^4.0.0",
+    "tailwindcss": "^4.0.0",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.0",
+    "@iconify-json/simple-icons": "^1.2.0",
+    "typescript": "^5.0.0",
+    "vue-tsc": "^3.0.0"
+  },
+  "packageManager": "bun@1.3.14"
+}

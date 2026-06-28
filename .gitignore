@@ -1,2 +1,13 @@
 /target
+/crates/wasm/target
 /.idea
+
+# Web
+/web/.nuxt
+/web/.output
+/web/node_modules
+/web/public/wasm/*
+!/web/public/wasm/.gitkeep
+
+# OS/editor noise
+.DS_Store

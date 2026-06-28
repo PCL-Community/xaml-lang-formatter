@@ -2,9 +2,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 
+use crate::api::{format_xaml, stable_format_xaml, FormatOptions};
 use crate::cli::Cli;
-use crate::parser::parse_document;
-use crate::writer::write_document_with_group_threshold;
+use crate::grouping::DEFAULT_GROUP_THRESHOLD;
 
 pub fn run(cli: Cli) -> Result<()> {
     if cli.group_threshold == 0 {
@@ -42,13 +42,26 @@ pub fn run(cli: Cli) -> Result<()> {
     Ok(())
 }
 
+pub fn format_content(input: &str, timestamp: &str) -> Result<String> {
+    format_content_with_group_threshold(input, timestamp, DEFAULT_GROUP_THRESHOLD)
+}
+
 pub fn format_content_with_group_threshold(
     input: &str,
     timestamp: &str,
     group_threshold: usize,
 ) -> Result<String> {
-    let doc = parse_document(input)?;
-    write_document_with_group_threshold(&doc, timestamp, group_threshold)
+    format_xaml(
+        input,
+        &FormatOptions {
+            group_threshold,
+            timestamp: timestamp.to_string(),
+        },
+    )
+}
+
+pub fn stable_format_content(input: &str, timestamp: &str) -> Result<String> {
+    stable_format_content_with_group_threshold(input, timestamp, DEFAULT_GROUP_THRESHOLD)
 }
 
 pub fn stable_format_content_with_group_threshold(
@@ -56,13 +69,13 @@ pub fn stable_format_content_with_group_threshold(
     timestamp: &str,
     group_threshold: usize,
 ) -> Result<String> {
-    let doc = parse_document(input)?;
-    let stable_timestamp = doc
-        .existing_formatter_timestamp
-        .as_deref()
-        .unwrap_or(timestamp);
-
-    write_document_with_group_threshold(&doc, stable_timestamp, group_threshold)
+    stable_format_xaml(
+        input,
+        &FormatOptions {
+            group_threshold,
+            timestamp: timestamp.to_string(),
+        },
+    )
 }
 
 pub fn process_file(path: &Path, cli: &Cli, timestamp: &str) -> Result<bool> {
@@ -154,7 +167,6 @@ pub fn normalize_newline(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grouping::DEFAULT_GROUP_THRESHOLD;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -199,12 +211,7 @@ mod tests {
 </ResourceDictionary>
 "#;
 
-        let output = format_content_with_group_threshold(
-            input,
-            "2026-06-28T15:21:30",
-            DEFAULT_GROUP_THRESHOLD,
-        )
-        .unwrap();
+        let output = format_content(input, "2026-06-28T15:21:30").unwrap();
 
         assert_eq!(output, expected);
     }
@@ -274,12 +281,7 @@ mod tests {
 </ResourceDictionary>
 "#;
 
-        let output = stable_format_content_with_group_threshold(
-            input,
-            "2026-06-28T15:21:30",
-            DEFAULT_GROUP_THRESHOLD,
-        )
-        .unwrap();
+        let output = stable_format_content(input, "2026-06-28T15:21:30").unwrap();
 
         assert_eq!(output, input);
     }
