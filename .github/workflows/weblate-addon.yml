@@ -41,7 +41,7 @@ jobs:
           rustup default stable
 
       - name: Build bundled binary for tests
-        run: ./scripts/build-binaries.sh
+        run: bash ./scripts/build-binaries.sh
 
       - name: Setup Python
         uses: actions/setup-python@v7
@@ -87,7 +87,7 @@ jobs:
         shell: bash
         run: |
           host="$(rustc -vV | awk '/^host:/ {print $2}')"
-          ./contrib/weblate/scripts/build-binaries.sh "${host}:${{ matrix.key }}"
+          bash ./contrib/weblate/scripts/build-binaries.sh "${host}:${{ matrix.key }}"
 
       - name: Package binary
         shell: bash
