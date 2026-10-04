@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xaml-lang-formatter-weblate"
+version = "0.1.0"
+description = "Weblate add-on that runs xaml-lang-formatter right before commits"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "PCL Community" }]
+keywords = ["weblate", "xaml", "wpf", "localization", "formatter"]
+classifiers = ["Framework :: Django",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Localization",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.urls]
+Homepage = "https://github.com/PCL-Community/xaml-lang-formatter"
+Source = "https://github.com/PCL-Community/xaml-lang-formatter"
+
+[tool.hatch.build]
+# Include prebuilt binaries even though bin/ contents are gitignored.
+artifacts = ["src/xaml_lang_formatter_addon/bin/**"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xaml_lang_formatter_addon"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

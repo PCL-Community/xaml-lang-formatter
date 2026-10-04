@@ -3,9 +3,9 @@
 [![CI](https://github.com/PCL-Community/xaml-lang-formatter/actions/workflows/ci.yml/badge.svg)](https://github.com/PCL-Community/xaml-lang-formatter/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/PCL-Community/xaml-lang-formatter/actions/workflows/pages.yml/badge.svg)](https://github.com/PCL-Community/xaml-lang-formatter/actions/workflows/pages.yml)
 
-`xaml-lang-formatter` is a formatter for WPF `ResourceDictionary` localization files. It understands language-resource
-keys such as `Meta.Name`, `Common.Action.Open`, and `Application.Window.Title`, then rewrites the dictionary into
-deterministic, review-friendly sections.
+`xaml-lang-formatter` is a formatter for WPF `ResourceDictionary` localization files. It understands
+language-resource keys such as `Meta.Name`, `Common.Action.Open`, and `Application.Window.Title`,
+then rewrites the dictionary into deterministic, review-friendly sections.
 
 The repository currently contains:
 
@@ -37,7 +37,6 @@ The current package version is **0.1.1**.
 Input:
 
 ```xml
-
 <ResourceDictionary
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -73,8 +72,8 @@ Output with the default threshold `8`:
 </ResourceDictionary>
 ```
 
-A nested section such as `Common.Action` is only created when at least `8` resources share that prefix, unless you
-override the threshold.
+A nested section such as `Common.Action` is only created when at least `8` resources share that
+prefix, unless you override the threshold.
 
 ## CLI usage
 
@@ -159,7 +158,8 @@ Currently unsupported:
 
 ## Rust library API
 
-The root crate exposes a library API in `src/api.rs` so the CLI and WASM wrapper share one formatter implementation.
+The root crate exposes a library API in `src/api.rs` so the CLI and WASM wrapper share one formatter
+implementation.
 
 ```rust
 use xaml_lang_formatter::api::{format_xaml, FormatOptions};
@@ -173,7 +173,8 @@ let output = format_xaml(
 )?;
 ```
 
-The CLI feature is enabled by default. For non-CLI consumers such as WASM, use the crate with default features disabled.
+The CLI feature is enabled by default. For non-CLI consumers such as WASM, use the crate with
+default features disabled.
 
 ## Web UI
 
@@ -185,8 +186,8 @@ The web app lives in `web/` and uses:
 - CodeMirror 6 for XML editing;
 - a local WASM build generated from `crates/wasm`.
 
-The UI formats the current CodeMirror editor content in place. Files are read locally through the browser and are not
-uploaded.
+The UI formats the current CodeMirror editor content in place. Files are read locally through the
+browser and are not uploaded.
 
 ### Web development
 
@@ -220,7 +221,20 @@ cd crates/wasm
 wasm-pack build --target web --release --out-dir ../../web/public/wasm
 ```
 
-`wasm-opt` is disabled in `crates/wasm/Cargo.toml` to avoid requiring Binaryen downloads during local builds and CI.
+`wasm-opt` is disabled in `crates/wasm/Cargo.toml` to avoid requiring Binaryen downloads during
+local builds and CI.
+
+## Weblate add-on
+
+This repository ships a Weblate add-on in `contrib/weblate/`. It runs
+`xaml-lang-formatter` on `ResourceDictionary` translation files right before Weblate commits them,
+so the formatted output is part of the same commit and no extra commit is created.
+
+The add-on bundles prebuilt binaries per platform (Linux x86-64/arm64, macOS, Windows) and exposes
+the group threshold, timeout, and a custom binary path as configuration options.
+
+See [contrib/weblate/README.md](contrib/weblate/README.md) for installation, registration,
+configuration, and the platform matrix.
 
 ## GitHub Pages deployment
 
@@ -284,6 +298,8 @@ xaml-lang-formatter/
 │   └── writer.rs       # Deterministic XML writer
 ├── crates/
 │   └── wasm/           # wasm-bindgen wrapper crate
+├── contrib/
+│   └── weblate/        # Weblate pre-commit add-on (bundles the CLI binary)
 ├── web/
 │   ├── app/            # Nuxt 4 app source
 │   ├── public/wasm/    # Generated WASM output
@@ -306,8 +322,8 @@ The WASM crate disables `wasm-opt` in release builds:
 wasm-opt = false
 ```
 
-If you still see Binaryen download errors, make sure you are running `bun run wasm:build` from the current project
-files.
+If you still see Binaryen download errors, make sure you are running `bun run wasm:build` from the
+current project files.
 
 ### GitHub Pages loads a blank page or cannot find WASM
 
@@ -322,8 +338,8 @@ The runtime imports WASM from `public/wasm`, so the base URL must match the depl
 
 ### `--check` reports files as changed after a previous format
 
-`--check` reuses the existing formatter timestamp when it detects one. If a file was edited manually or the formatter
-comment was removed, run the formatter once before using `--check` in CI.
+`--check` reuses the existing formatter timestamp when it detects one. If a file was edited manually
+or the formatter comment was removed, run the formatter once before using `--check` in CI.
 
 ## License
 

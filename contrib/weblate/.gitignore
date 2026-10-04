@@ -1,0 +1,13 @@
+# Binaries are built by scripts/build-binaries.sh and bundled into wheels.
+src/xaml_lang_formatter_addon/bin/*
+!src/xaml_lang_formatter_addon/bin/.gitignore
+
+# Python build and test artifacts
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/

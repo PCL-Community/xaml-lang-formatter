@@ -1,0 +1,154 @@
+name: Weblate add-on
+
+on:
+  pull_request:
+    paths:
+      - "contrib/weblate/**"
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/weblate-addon.yml"
+  push:
+    branches:
+      - master
+    paths:
+      - "contrib/weblate/**"
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/weblate-addon.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: contrib/weblate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Build bundled binary for tests
+        run: ./scripts/build-binaries.sh
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install tooling
+        run: pip install ruff pytest
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Test
+        run: pytest -q
+
+  build-binaries:
+    name: Binary ${{ matrix.key }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            key: linux-x86_64
+          - os: ubuntu-24.04-arm
+            key: linux-aarch64
+          - os: windows-latest
+            key: windows-x86_64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Rust
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Build bundled binary
+        shell: bash
+        run: |
+          host="$(rustc -vV | awk '/^host:/ {print $2}')"
+          ./contrib/weblate/scripts/build-binaries.sh "${host}:${{ matrix.key }}"
+
+      - name: Package binary
+        shell: bash
+        env:
+          KEY: ${{ matrix.key }}
+        run: |
+          python - <<'PY'
+          import os
+          import shutil
+
+          key = os.environ["KEY"]
+          base = "contrib/weblate/src/xaml_lang_formatter_addon/bin"
+          shutil.make_archive(os.path.join(base, key), "zip", os.path.join(base, key))
+          PY
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: binary-${{ matrix.key }}
+          path: contrib/weblate/src/xaml_lang_formatter_addon/bin/${{ matrix.key }}.zip
+          if-no-files-found: error
+
+  wheel:
+    name: Build wheel
+    needs: build-binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download binaries
+        uses: actions/download-artifact@v8
+        with:
+          pattern: binary-*
+          path: /tmp/weblate-binaries
+          merge-multiple: true
+
+      - name: Unpack binaries into the package
+        run: |
+          bin_dir="contrib/weblate/src/xaml_lang_formatter_addon/bin"
+          for archive in /tmp/weblate-binaries/*.zip; do
+            key="$(basename "${archive}" .zip)"
+            mkdir -p "${bin_dir}/${key}"
+            unzip -o "${archive}" -d "${bin_dir}/${key}"
+          done
+          find "${bin_dir}" -type f -print
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Build wheel
+        run: |
+          pip install build
+          python -m build --wheel
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: weblate-addon-wheel
+          path: contrib/weblate/dist/*.whl
+          if-no-files-found: error

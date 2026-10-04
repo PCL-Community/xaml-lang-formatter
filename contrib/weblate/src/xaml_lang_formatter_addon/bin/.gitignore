@@ -1,0 +1,4 @@
+# Prebuilt binaries are produced by scripts/build-binaries.sh and bundled into
+# the wheel. They are intentionally not tracked in git.
+*
+!.gitignore
