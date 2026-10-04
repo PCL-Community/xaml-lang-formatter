@@ -93,17 +93,71 @@ compatible components (Operations → Add-ons).
 
 ### Docker
 
-Add the wheel to a custom image, for example:
+The add-on ships a settings module, so a custom image only needs to install the
+wheel and point `DJANGO_SETTINGS_MODULE` at it. The binary is inside the wheel,
+so no Rust toolchain is needed in the runtime image.
+
+**Option 1 — custom image (recommended)**
+
+Create a `Dockerfile` next to the downloaded wheel:
 
 ```dockerfile
 FROM weblate/weblate:latest
 
-COPY xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl /tmp/
-RUN uv pip install --system /tmp/xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl
+USER root
+
+COPY xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl /usr/src/
+RUN source /app/venv/bin/activate \
+    && uv pip install --no-cache-dir /usr/src/xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl
+
+ENV DJANGO_SETTINGS_MODULE=xaml_lang_formatter_addon.settings
+
+USER 1000
 ```
 
-Then register it through `/app/data/settings-override.py`. Because the binary is inside the wheel,
-no Rust toolchain is needed in the runtime image.
+Then copy the official `docker-compose.yml` and replace `image: weblate/weblate`
+with `build: .` on the `weblate` service, or build and tag the image yourself
+and reference that tag:
+
+```bash
+docker build -t my-weblate .
+```
+
+The bundled binary matching the container architecture
+(`linux-x86_64` / `linux-aarch64`) is selected automatically.
+
+**Option 2 — no rebuild, via the data volume**
+
+Weblate adds `/app/data/python` to the import path, so you can mount the package
+and register it through the settings override:
+
+```bash
+unzip xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl -d /tmp/xlf
+```
+
+```yaml
+# docker-compose.override.yml
+services:
+  weblate:
+    volumes:
+      - ./xlf/xaml_lang_formatter_addon:/app/data/python/xaml_lang_formatter_addon:ro
+      - ./settings-override.py:/app/data/settings-override.py:ro
+```
+
+```python
+# settings-override.py
+WEBLATE_ADDONS += ("xaml_lang_formatter_addon.addons.XamlLangFormatterAddon",)
+```
+
+Recreate the container afterwards so the mount and settings are applied:
+
+```bash
+docker compose up -d
+```
+
+Use Option 1 when possible: the wheel installs the package properly and keeps
+the settings module versioned with it.
+
 
 ## Configuration
 
