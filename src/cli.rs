@@ -7,7 +7,7 @@ use crate::grouping::DEFAULT_GROUP_THRESHOLD;
 #[derive(Debug, Parser)]
 #[command(name = "xaml-lang-formatter")]
 #[command(version)]
-#[command(about = "Format WPF XAML ResourceDictionary language files")]
+#[command(about = "Format WPF XAML and Avalonia AXAML ResourceDictionary language files")]
 pub struct Cli {
     /// Files or directories to format. Defaults to the current directory when omitted.
     pub paths: Vec<PathBuf>,

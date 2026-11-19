@@ -1,10 +1,9 @@
 import {useNuxtApp} from "nuxt/app";
 
-export const SAMPLE_XAML = `<ResourceDictionary
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:sys="clr-namespace:System;assembly=mscorlib"
-    xml:space="preserve">
+export const SAMPLE_AXAML = `<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xml:space="preserve">
 
     <sys:String x:Key="Common.Action.Test.Test2">2</sys:String>
     <sys:String x:Key="Common.App">App</sys:String>
@@ -64,6 +63,6 @@ export function useXamlFormatter() {
         createTimestamp,
         downloadText,
         format,
-        sample: SAMPLE_XAML
+        sample: SAMPLE_AXAML
     }
 }

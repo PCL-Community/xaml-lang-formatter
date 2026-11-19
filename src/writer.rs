@@ -24,18 +24,7 @@ pub fn write_document_with_group_threshold(
         "<!-- Formatted by {TOOL_NAME} at {timestamp}. -->\n"
     ));
 
-    s.push('<');
-    s.push_str(&doc.root_name);
-
-    for attr in &doc.root_attrs {
-        s.push_str(&format!(
-            "\n    {}=\"{}\"",
-            attr.name,
-            escape_attr(&attr.value)
-        ));
-    }
-
-    s.push_str(">\n");
+    write_root_start_tag(doc, &mut s);
 
     for group in sorted_top_groups(&root) {
         emit_group_xml(group, &doc.items, &mut s, group_threshold);
@@ -45,6 +34,42 @@ pub fn write_document_with_group_threshold(
     s.push_str(&format!("</{}>\n", doc.root_name));
 
     Ok(s)
+}
+
+fn write_root_start_tag(doc: &Document, s: &mut String) {
+    s.push('<');
+    s.push_str(&doc.root_name);
+
+    if is_avalonia_document(doc) {
+        let continuation_indent = " ".repeat(doc.root_name.len() + 2);
+
+        for (index, attr) in doc.root_attrs.iter().enumerate() {
+            if index == 0 {
+                s.push(' ');
+            } else {
+                s.push('\n');
+                s.push_str(&continuation_indent);
+            }
+
+            s.push_str(&format!("{}=\"{}\"", attr.name, escape_attr(&attr.value)));
+        }
+    } else {
+        for attr in &doc.root_attrs {
+            s.push_str(&format!(
+                "\n    {}=\"{}\"",
+                attr.name,
+                escape_attr(&attr.value)
+            ));
+        }
+    }
+
+    s.push_str(">\n");
+}
+
+fn is_avalonia_document(doc: &Document) -> bool {
+    doc.root_attrs
+        .iter()
+        .any(|attr| attr.name == "xmlns" && attr.value.trim() == "https://github.com/avaloniaui")
 }
 
 fn emit_group_xml(node: &KeyNode, items: &[ResourceItem], s: &mut String, group_threshold: usize) {
@@ -185,6 +210,33 @@ mod tests {
         write_document_with_group_threshold(doc, timestamp, DEFAULT_GROUP_THRESHOLD)
     }
 
+    fn avalonia_doc(items: Vec<ResourceItem>) -> Document {
+        Document {
+            xml_decl: None,
+            existing_formatter_timestamp: None,
+            root_name: "ResourceDictionary".to_string(),
+            root_attrs: vec![
+                Attr {
+                    name: "xmlns".to_string(),
+                    value: "https://github.com/avaloniaui".to_string(),
+                },
+                Attr {
+                    name: "xmlns:x".to_string(),
+                    value: "http://schemas.microsoft.com/winfx/2006/xaml".to_string(),
+                },
+                Attr {
+                    name: "xmlns:sys".to_string(),
+                    value: "clr-namespace:System;assembly=System.Runtime".to_string(),
+                },
+                Attr {
+                    name: "xml:space".to_string(),
+                    value: "preserve".to_string(),
+                },
+            ],
+            items,
+        }
+    }
+
     fn item(key: &str, text: &str) -> ResourceItem {
         ResourceItem {
             tag_name: "sys:String".to_string(),
@@ -311,5 +363,36 @@ mod tests {
         let output = write_document(&doc(vec![resource]), "2026-06-28T15:21:30").unwrap();
 
         assert!(output.contains("Comment=\"Line 1&#xA;Line 2\""));
+    }
+
+    #[test]
+    fn writes_avalonia_root_header_aligned() {
+        let output = write_document(
+            &avalonia_doc(vec![item("Meta.Code", "en-US")]),
+            "2026-11-20T00:00:00",
+        )
+        .unwrap();
+
+        assert!(output.contains(concat!(
+            "<ResourceDictionary xmlns=\"https://github.com/avaloniaui\"\n",
+            "                    xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\"\n",
+            "                    xmlns:sys=\"clr-namespace:System;assembly=System.Runtime\"\n",
+            "                    xml:space=\"preserve\">"
+        )));
+    }
+
+    #[test]
+    fn keeps_wpf_root_header_multiline() {
+        let output = write_document(
+            &doc(vec![item("Meta.Code", "en-US")]),
+            "2026-11-20T00:00:00",
+        )
+        .unwrap();
+
+        assert!(output.contains(concat!(
+            "<ResourceDictionary\n",
+            "    xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"\n",
+            "    xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\">"
+        )));
     }
 }

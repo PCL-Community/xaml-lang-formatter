@@ -1,8 +1,8 @@
 # xaml-lang-formatter Weblate add-on
 
 A [Weblate](https://weblate.org/) add-on that runs
-[`xaml-lang-formatter`](../..) on WPF `ResourceDictionary` (`.xaml`)
-localization files **right before Weblate commits them**.
+[`xaml-lang-formatter`](../..) on WPF XAML / Avalonia AXAML `ResourceDictionary`
+(`.xaml` / `.axaml`) localization files **right before Weblate commits them**.
 
 Because Weblate writes the current translation to disk and then fires the
 `vcs_pre_commit` signal before creating the git commit, rewriting the file in this hook lands the
@@ -93,9 +93,9 @@ compatible components (Operations → Add-ons).
 
 ### Docker
 
-The add-on ships a settings module, so a custom image only needs to install the
-wheel and point `DJANGO_SETTINGS_MODULE` at it. The binary is inside the wheel,
-so no Rust toolchain is needed in the runtime image.
+The add-on ships a settings module, so a custom image only needs to install the wheel and point
+`DJANGO_SETTINGS_MODULE` at it. The binary is inside the wheel, so no Rust toolchain is needed in
+the runtime image.
 
 **Option 1 — custom image (recommended)**
 
@@ -116,20 +116,20 @@ USER 1000
 ```
 
 Then copy the official `docker-compose.yml` and replace `image: weblate/weblate`
-with `build: .` on the `weblate` service, or build and tag the image yourself
-and reference that tag:
+with `build: .` on the `weblate` service, or build and tag the image yourself and reference that
+tag:
 
 ```bash
 docker build -t my-weblate .
 ```
 
-The bundled binary matching the container architecture
-(`linux-x86_64` / `linux-aarch64`) is selected automatically.
+The bundled binary matching the container architecture (`linux-x86_64` / `linux-aarch64`) is
+selected automatically.
 
 **Option 2 — no rebuild, via the data volume**
 
-Weblate adds `/app/data/python` to the import path, so you can mount the package
-and register it through the settings override:
+Weblate adds `/app/data/python` to the import path, so you can mount the package and register it
+through the settings override:
 
 ```bash
 unzip xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl -d /tmp/xlf
@@ -155,9 +155,8 @@ Recreate the container afterwards so the mount and settings are applied:
 docker compose up -d
 ```
 
-Use Option 1 when possible: the wheel installs the package properly and keeps
-the settings module versioned with it.
-
+Use Option 1 when possible: the wheel installs the package properly and keeps the settings module
+versioned with it.
 
 ## Configuration
 

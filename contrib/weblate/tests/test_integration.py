@@ -21,6 +21,19 @@ SAMPLE = """<ResourceDictionary
 </ResourceDictionary>
 """
 
+SAMPLE_AXAML = """<ResourceDictionary
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+    xml:space="preserve">
+
+    <sys:String x:Key="Common.Action.Open">Open</sys:String>
+    <sys:String x:Key="Meta.Code">en-US</sys:String>
+    <sys:String x:Key="Common.App">App</sys:String>
+
+</ResourceDictionary>
+"""
+
 
 class Storage:
     def __init__(self, configuration: dict | None = None) -> None:
@@ -56,4 +69,26 @@ def test_pre_commit_formats_file_on_disk(tmp_path) -> None:
     assert "<!-- Meta -->" in formatted
     assert "<!-- Common -->" in formatted
     # Keys are sorted within the section.
+    assert formatted.index("Common.Action.Open") < formatted.index("Common.App")
+
+
+@pytest.mark.skipif(binaries.resolve_binary() is None, reason="no bundled binary")
+def test_pre_commit_formats_axaml_file_on_disk(tmp_path) -> None:
+    target = tmp_path / "fr.axaml"
+    target.write_text(SAMPLE_AXAML, encoding="utf-8")
+
+    addon = addons.XamlLangFormatterAddon(Storage())
+    translation = FakeTranslation(str(target), str(tmp_path))
+
+    assert addon.pre_commit(translation, "author", True) is None
+    assert translation.store_hash_calls == 1
+
+    formatted = target.read_text(encoding="utf-8")
+    assert "<!-- Formatted by xaml-lang-formatter" in formatted
+    assert "<!-- Meta -->" in formatted
+    assert "<!-- Common -->" in formatted
+    assert (
+        '<ResourceDictionary xmlns="https://github.com/avaloniaui"\n'
+        '                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"'
+    ) in formatted
     assert formatted.index("Common.Action.Open") < formatted.index("Common.App")

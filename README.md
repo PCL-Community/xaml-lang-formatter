@@ -3,9 +3,10 @@
 [![CI](https://github.com/PCL-Community/xaml-lang-formatter/actions/workflows/ci.yml/badge.svg)](https://github.com/PCL-Community/xaml-lang-formatter/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/PCL-Community/xaml-lang-formatter/actions/workflows/pages.yml/badge.svg)](https://github.com/PCL-Community/xaml-lang-formatter/actions/workflows/pages.yml)
 
-`xaml-lang-formatter` is a formatter for WPF `ResourceDictionary` localization files. It understands
-language-resource keys such as `Meta.Name`, `Common.Action.Open`, and `Application.Window.Title`,
-then rewrites the dictionary into deterministic, review-friendly sections.
+`xaml-lang-formatter` is a formatter for WPF XAML and Avalonia AXAML `ResourceDictionary`
+localization files. It understands language-resource keys such as `Meta.Name`, `Common.Action.Open`,
+and `Application.Window.Title`, then rewrites the dictionary into deterministic, review-friendly
+sections.
 
 The repository currently contains:
 
@@ -15,11 +16,12 @@ The repository currently contains:
 - a Nuxt 4 + Nuxt UI 4 browser app using Bun and CodeMirror 6;
 - GitHub Actions workflows for CI and GitHub Pages deployment.
 
-The current package version is **0.1.1**.
+The current package version is **0.2.0**.
 
 ## Features
 
-- Formats `.xaml` WPF localization dictionaries.
+- Formats `.xaml` WPF and `.axaml` Avalonia localization dictionaries.
+- Keeps the Avalonia root header in the aligned style used by Avalonia projects.
 - Supports individual files and recursive directory formatting.
 - Defaults to the current working directory when no path is provided.
 - Groups resources by dotted `x:Key` prefixes.
@@ -32,7 +34,9 @@ The current package version is **0.1.1**.
 - Provides the same formatter behavior in CLI and browser via Rust WebAssembly.
 - Ships a modern web UI with a single CodeMirror editor and in-place formatting.
 
-## Formatting example
+## Formatting examples
+
+### WPF XAML
 
 Input:
 
@@ -75,12 +79,36 @@ Output with the default threshold `8`:
 A nested section such as `Common.Action` is only created when at least `8` resources share that
 prefix, unless you override the threshold.
 
+### Avalonia AXAML
+
+Avalonia dictionaries use the same resource shape with an Avalonia root header. `.axaml` files are
+detected automatically, and the root header keeps the aligned Avalonia layout:
+
+```xml
+<!-- Formatted by xaml-lang-formatter at 2026-11-20T00:00:00. -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xml:space="preserve">
+
+    <!-- Meta -->
+
+    <sys:String x:Key="Meta.Code">en-US</sys:String>
+
+    <!-- Common -->
+
+    <sys:String x:Key="Common.App">App</sys:String>
+
+</ResourceDictionary>
+```
+
 ## CLI usage
 
 Run from source:
 
 ```bash
 cargo run -- ./Lang/en-US.xaml
+cargo run -- ./Lang/en-US.axaml
 cargo run -- ./Lang
 cargo run -- ./Lang --check
 cargo run -- ./Lang --dry-run
@@ -100,6 +128,7 @@ After installing or building the binary:
 xaml-lang-formatter
 xaml-lang-formatter ./Lang
 xaml-lang-formatter ./Lang/en-US.xaml --check
+xaml-lang-formatter ./Lang/en-US.axaml --check
 ```
 
 ### CLI options
@@ -109,15 +138,18 @@ xaml-lang-formatter ./Lang/en-US.xaml --check
 | `[paths...]`                | Files or directories to format. Defaults to the current directory when omitted.              |
 | `--check`                   | Check whether files are already formatted. Does not write changes.                           |
 | `--dry-run`                 | Print files that would change. Does not write changes.                                       |
-| `--backup`                  | Write a `.xaml.bak` backup before overwriting a file.                                        |
+| `--backup`                  | Write a `.bak` file next to the original before overwriting it.                              |
 | `--group-threshold <N>`     | Minimum number of resources sharing a prefix before creating a nested section. Default: `8`. |
 | `--partition-threshold <N>` | Alias for `--group-threshold`.                                                               |
-| `--no-recursive`            | Only format direct `.xaml` files in a directory.                                             |
+| `--no-recursive`            | Only format direct `.xaml` / `.axaml` files in a directory.                                  |
 | `--help`                    | Show the full CLI help.                                                                      |
 
 ## Formatting rules
 
 - Only the root `ResourceDictionary` is formatted.
+- WPF `.xaml` and Avalonia `.axaml` files are both supported.
+- Avalonia dictionaries are detected by the `https://github.com/avaloniaui` root namespace and keep
+  an aligned root header.
 - Existing grouping comments are ignored and regenerated.
 - A formatter comment is written at the top of the file.
 - Top-level key prefixes always become sections.
@@ -135,14 +167,15 @@ This formatter intentionally targets plain localization resources:
 
 ```xml
 <ResourceDictionary ...>
-    <sys:String x:Key="Common.App">App</sys:String>
-    <sys:String x:Key="Common.Action.Open">Open</sys:String>
-</ResourceDictionary>
+<sys:String x:Key="Common.App">App</sys:String>
+<sys:String x:Key="Common.Action.Open">Open</sys:String>
+        </ResourceDictionary>
 ```
 
 Supported:
 
 - `ResourceDictionary` as the root element;
+- WPF presentation namespaces and Avalonia (`https://github.com/avaloniaui`) namespaces;
 - direct child resources with an `x:Key` or `*:Key` attribute;
 - plain text content;
 - self-closing keyed child elements;
@@ -165,12 +198,12 @@ implementation.
 use xaml_lang_formatter::api::{format_xaml, FormatOptions};
 
 let output = format_xaml(
-    input,
-    &FormatOptions {
-        group_threshold: 8,
-        timestamp: "2026-06-28T15:21:30".to_string(),
-    },
-)?;
+input,
+& FormatOptions {
+group_threshold: 8,
+timestamp: "2026-06-28T15:21:30".to_string(),
+},
+) ?;
 ```
 
 The CLI feature is enabled by default. For non-CLI consumers such as WASM, use the crate with
@@ -186,8 +219,8 @@ The web app lives in `web/` and uses:
 - CodeMirror 6 for XML editing;
 - a local WASM build generated from `crates/wasm`.
 
-The UI formats the current CodeMirror editor content in place. Files are read locally through the
-browser and are not uploaded.
+The UI formats the current CodeMirror editor content in place. It accepts WPF `.xaml` and Avalonia
+`.axaml` files. Files are read locally through the browser and are not uploaded.
 
 ### Web development
 
@@ -227,8 +260,9 @@ local builds and CI.
 ## Weblate add-on
 
 This repository ships a Weblate add-on in `contrib/weblate/`. It runs
-`xaml-lang-formatter` on `ResourceDictionary` translation files right before Weblate commits them,
-so the formatted output is part of the same commit and no extra commit is created.
+`xaml-lang-formatter` on `ResourceDictionary` translation files (`.xaml` and `.axaml`) right before
+Weblate commits them, so the formatted output is part of the same commit and no extra commit is
+created.
 
 The add-on bundles prebuilt binaries per platform (Linux x86-64/arm64, macOS, Windows) and exposes
 the group threshold, timeout, and a custom binary path as configuration options.

@@ -109,7 +109,7 @@ pub fn process_file(path: &Path, cli: &Cli, timestamp: &str) -> Result<bool> {
     let output = format_content_with_group_threshold(&input, timestamp, cli.group_threshold)?;
 
     if cli.backup {
-        let backup_path = path.with_extension("xaml.bak");
+        let backup_path = backup_path(path);
         std::fs::write(&backup_path, &input)
             .with_context(|| format!("failed to write backup {}", backup_path.display()))?;
     }
@@ -118,6 +118,12 @@ pub fn process_file(path: &Path, cli: &Cli, timestamp: &str) -> Result<bool> {
     println!("formatted: {}", path.display());
 
     Ok(true)
+}
+
+fn backup_path(path: &Path) -> PathBuf {
+    let mut backup = path.as_os_str().to_os_string();
+    backup.push(".bak");
+    PathBuf::from(backup)
 }
 
 pub fn collect_files(paths: &[PathBuf], recursive: bool) -> Result<Vec<PathBuf>> {
@@ -159,10 +165,11 @@ pub fn collect_files(paths: &[PathBuf], recursive: bool) -> Result<Vec<PathBuf>>
     Ok(files)
 }
 
+/// Returns true for WPF `.xaml` and Avalonia `.axaml` language files.
 pub fn is_xaml(path: &Path) -> bool {
     path.extension()
         .and_then(|s| s.to_str())
-        .map(|s| s.eq_ignore_ascii_case("xaml"))
+        .map(|s| s.eq_ignore_ascii_case("xaml") || s.eq_ignore_ascii_case("axaml"))
         .unwrap_or(false)
 }
 
@@ -290,5 +297,78 @@ mod tests {
         let output = stable_format_content(input, "2026-06-28T15:21:30").unwrap();
 
         assert_eq!(output, input);
+    }
+
+    #[test]
+    fn formats_avalonia_axaml_with_aligned_header() {
+        let input = r#"<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=System.Runtime" xml:space="preserve">
+
+    <sys:String x:Key="Common.App">App</sys:String>
+    <sys:String x:Key="Meta.Code">en-US</sys:String>
+
+</ResourceDictionary>
+"#;
+
+        let expected = r#"<!-- Formatted by xaml-lang-formatter at 2026-11-20T00:00:00. -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xml:space="preserve">
+
+    <!-- Meta -->
+
+    <sys:String x:Key="Meta.Code">en-US</sys:String>
+
+    <!-- Common -->
+
+    <sys:String x:Key="Common.App">App</sys:String>
+
+</ResourceDictionary>
+"#;
+
+        let output = format_content(input, "2026-11-20T00:00:00").unwrap();
+
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn already_formatted_axaml_is_stable() {
+        let input = r#"<!-- Formatted by xaml-lang-formatter at 2026-01-01T00:00:00. -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xml:space="preserve">
+
+    <!-- Meta -->
+
+    <sys:String x:Key="Meta.Code">en-US</sys:String>
+
+</ResourceDictionary>
+"#;
+
+        let output = stable_format_content(input, "2026-11-20T00:00:00").unwrap();
+
+        assert_eq!(output, input);
+    }
+
+    #[test]
+    fn recognizes_xaml_and_axaml_extensions() {
+        assert!(is_xaml(Path::new("en-US.xaml")));
+        assert!(is_xaml(Path::new("en-US.axaml")));
+        assert!(is_xaml(Path::new("en-US.AXAML")));
+        assert!(!is_xaml(Path::new("en-US.xml")));
+        assert!(!is_xaml(Path::new("en-US.xaml.bak")));
+    }
+
+    #[test]
+    fn backup_path_keeps_original_extension() {
+        assert_eq!(
+            backup_path(Path::new("/tmp/en-US.axaml")),
+            PathBuf::from("/tmp/en-US.axaml.bak")
+        );
+        assert_eq!(
+            backup_path(Path::new("/tmp/en-US.xaml")),
+            PathBuf::from("/tmp/en-US.xaml.bak")
+        );
     }
 }

@@ -5,6 +5,7 @@
 # Web
 /web/.nuxt
 /web/.output
+/web/dist
 /web/node_modules
 /web/public/wasm/*
 !/web/public/wasm/.gitkeep
