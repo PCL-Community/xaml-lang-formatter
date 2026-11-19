@@ -1,0 +1,224 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to publish (for example 0.2.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  prepare:
+    name: Validate release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Validate versions
+        id: version
+        shell: bash
+        run: |
+          tag="${{ inputs.tag || github.ref_name }}"
+          version="${tag#v}"
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tag must be a semantic version, got: ${tag}"
+            exit 1
+          fi
+
+          cargo_version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
+          wasm_version="$(sed -n 's/^version = "\(.*\)"/\1/p' crates/wasm/Cargo.toml | head -n1)"
+          addon_version="$(sed -n 's/^version = "\(.*\)"/\1/p' contrib/weblate/pyproject.toml | head -n1)"
+
+          for actual in "${cargo_version}" "${wasm_version}" "${addon_version}"; do
+            if [[ "${actual}" != "${version}" ]]; then
+              echo "::error::Version mismatch: tag=${version}, manifest=${actual}"
+              exit 1
+            fi
+          done
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Test
+        run: cargo test --all-features
+
+  build:
+    name: Build ${{ matrix.key }}
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            key: linux-x86_64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            key: linux-aarch64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            key: windows-x86_64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Setup Rust
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add "${{ matrix.target }}"
+
+      - name: Build binary
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          KEY: ${{ matrix.key }}
+        run: bash ./contrib/weblate/scripts/build-binaries.sh "${TARGET}:${KEY}"
+
+      - name: Package release files
+        shell: bash
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          KEY: ${{ matrix.key }}
+        run: |
+          bin_dir="contrib/weblate/src/xaml_lang_formatter_addon/bin/${KEY}"
+          stage="dist/${KEY}"
+          mkdir -p "${stage}"
+          cp README.md LICENSE "${stage}/"
+
+          if [[ "${KEY}" == windows-* ]]; then
+            cp "${bin_dir}/xaml-lang-formatter.exe" "${stage}/"
+            cp "${bin_dir}/xaml-lang-formatter.exe" "dist/xaml-lang-formatter-${VERSION}-${KEY}.exe"
+            python -c "import os, shutil; version = os.environ['VERSION']; key = os.environ['KEY']; shutil.make_archive(f'dist/xaml-lang-formatter-{version}-{key}', 'zip', f'dist/{key}')"
+          else
+            cp "${bin_dir}/xaml-lang-formatter" "${stage}/"
+            cp "${bin_dir}/xaml-lang-formatter" "dist/xaml-lang-formatter-${VERSION}-${KEY}"
+            tar -C "${stage}" -czf "dist/xaml-lang-formatter-${VERSION}-${KEY}.tar.gz" README.md LICENSE xaml-lang-formatter
+          fi
+
+          rm -rf "${stage}"
+
+      - name: Upload release files
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.key }}
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Upload bundled binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: binary-${{ matrix.key }}
+          path: contrib/weblate/src/xaml_lang_formatter_addon/bin/${{ matrix.key }}/*
+          if-no-files-found: error
+
+  wheel:
+    name: Build Weblate wheel
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Download binaries
+        uses: actions/download-artifact@v8
+        with:
+          pattern: binary-*
+          path: /tmp/weblate-binaries
+
+      - name: Install binaries
+        shell: bash
+        run: |
+          bin_dir="contrib/weblate/src/xaml_lang_formatter_addon/bin"
+          for dir in /tmp/weblate-binaries/binary-*; do
+            key="${dir##*/binary-}"
+            mkdir -p "${bin_dir}/${key}"
+            cp "${dir}"/* "${bin_dir}/${key}/"
+          done
+          find "${bin_dir}" -type f -print
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Build wheel
+        working-directory: contrib/weblate
+        run: |
+          pip install build
+          python -m build --wheel
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: weblate-addon-wheel
+          path: contrib/weblate/dist/*.whl
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release
+    needs: [prepare, build, wheel]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release files
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Download Weblate wheel
+        uses: actions/download-artifact@v8
+        with:
+          name: weblate-addon-wheel
+          path: dist
+
+      - name: Generate checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        shell: bash
+        run: |
+          if gh release view "${VERSION}" -R "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${VERSION}" dist/* -R "${GITHUB_REPOSITORY}" --clobber
+          else
+            gh release create "${VERSION}" dist/* \
+              -R "${GITHUB_REPOSITORY}" \
+              --title "${VERSION}" \
+              --generate-notes \
+              --verify-tag
+          fi

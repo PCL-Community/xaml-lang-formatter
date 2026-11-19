@@ -18,6 +18,16 @@ The repository currently contains:
 
 The current package version is **0.2.0**.
 
+## Releases
+
+Prebuilt binaries and the Weblate add-on wheel are published on the
+[GitHub Releases](https://github.com/PCL-Community/xaml-lang-formatter/releases) page:
+
+- Windows x86-64: `.zip` archive or standalone `.exe`;
+- Linux x86-64 / arm64: static `.tar.gz` archives;
+- Weblate add-on: `xaml_lang_formatter_weblate-<version>-py3-none-any.whl` with bundled
+  platform binaries.
+
 ## Features
 
 - Formats `.xaml` WPF and `.axaml` Avalonia localization dictionaries.
@@ -264,7 +274,7 @@ This repository ships a Weblate add-on in `contrib/weblate/`. It runs
 Weblate commits them, so the formatted output is part of the same commit and no extra commit is
 created.
 
-The add-on bundles prebuilt binaries per platform (Linux x86-64/arm64, macOS, Windows) and exposes
+The add-on bundles prebuilt binaries per platform (Linux x86-64/arm64 and Windows) and exposes
 the group threshold, timeout, and a custom binary path as configuration options.
 
 See [contrib/weblate/README.md](contrib/weblate/README.md) for installation, registration,
