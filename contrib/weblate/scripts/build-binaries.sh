@@ -34,7 +34,7 @@ build_target() {
   echo "==> Building ${target} (${key})"
 
   rustup target add "${target}" >/dev/null 2>&1 || true
-  cargo build --release --manifest-path "${ROOT}/Cargo.toml" --target "${target}"
+  cargo build --release --locked --manifest-path "${ROOT}/Cargo.toml" --target "${target}"
 
   local dir="${ROOT}/target/${target}/release"
   local src="${dir}/${BIN}"

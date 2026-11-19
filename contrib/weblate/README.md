@@ -65,8 +65,8 @@ To bundle additional platforms, cross-compile them explicitly before building th
 ```
 
 > Linux musl targets produce static binaries with no runtime glibc
-> dependency. macOS and Windows binaries must be built on their own runners
-> (see `.github/workflows/weblate-addon.yml`).
+> dependency. Windows binaries must be built on a Windows runner; add a macOS
+> runner and the `darwin-*` platform keys if you need macOS bundles.
 
 Binaries under `bin/` are intentionally gitignored; the wheel build includes them via
 `tool.hatch.build.artifacts`.
@@ -74,7 +74,7 @@ Binaries under `bin/` are intentionally gitignored; the wheel build includes the
 ### 2. Install into Weblate
 
 ```bash
-uv pip install xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl
+uv pip install xaml_lang_formatter_weblate-0.2.0-py3-none-any.whl
 # or, for development:
 uv pip install -e .
 ```
@@ -106,9 +106,9 @@ FROM weblate/weblate:latest
 
 USER root
 
-COPY xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl /usr/src/
+COPY xaml_lang_formatter_weblate-0.2.0-py3-none-any.whl /usr/src/
 RUN source /app/venv/bin/activate \
-    && uv pip install --no-cache-dir /usr/src/xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl
+    && uv pip install --no-cache-dir /usr/src/xaml_lang_formatter_weblate-0.2.0-py3-none-any.whl
 
 ENV DJANGO_SETTINGS_MODULE=xaml_lang_formatter_addon.settings
 
@@ -132,7 +132,7 @@ Weblate adds `/app/data/python` to the import path, so you can mount the package
 through the settings override:
 
 ```bash
-unzip xaml_lang_formatter_weblate-0.1.0-py3-none-any.whl -d /tmp/xlf
+unzip xaml_lang_formatter_weblate-0.2.0-py3-none-any.whl -d /tmp/xlf
 ```
 
 ```yaml
